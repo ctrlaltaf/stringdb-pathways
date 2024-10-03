@@ -124,5 +124,14 @@ def main():
     print("edges:" + str(len(k_hop_subgraph.edges())/2))
 
 
+
+    interaction = []
+    for index, row in df_stringdb.iterrows():
+        node1 = row["protein1"]
+        node2 = row["protein2"]
+        combined = '_'.join(sorted([node1, node2]))
+        interaction.append(combined)
+    df_stringdb["interaction"] = interaction
+
 if __name__ == "__main__":
     main()
