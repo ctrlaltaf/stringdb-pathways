@@ -69,11 +69,11 @@ def bfs_k_hop(G: nx.DiGraph, node_set, k):
 def main():
     print("temp.py")
 
-    pathway_path = "wnt_mapped.csv"
+    pathway_dir = "./pathways"
     stringdb_path = "9606.protein.links.detailed.v12.0.txt"
+    pathways = ["apoptosis", "hedgehog", "jak", "notch", "wnt"]
 
     # read in files
-    df_pathway = read_file(pathway_path, ",")
     df_stringdb = read_file(stringdb_path, " ")
 
     columns = ["protein1", "protein2", "experimental"]
@@ -82,32 +82,36 @@ def main():
     # export_graph_to_pickle(G, "interactome-experimental.pickle")
     print("Interactome")
     print("nodes:" + str(len(G.nodes())))
-    print("edges:" + str(len(G.edges()) / 2))
+    print("edges:" + str(len(G.edges())))
     print()
 
-    columns = [
-        "string_id1",
-        "string_id2",
-    ]
-    # D: nx.DiGraph = import_graph_from_pickle("pathway.pickle")
-    D: nx.DiGraph = create_interactome(df_pathway, columns)
-    # export_graph_to_pickle(D, "pathway.pickle")
-    print("Pathway")
-    print("nodes:" + str(len(D.nodes())))
-    print("edges:" + str(len(D.edges()) / 2))
-    print()
+    for path in pathways:
+        file = pathway_dir + "/" + path + "/final.csv"
+        df_pathway = read_file(file, ",")
 
-    print("Pathway and interactome compatibility")
-    i = 0
-    for edge in D.edges():
-        if G.has_edge(edge[0], edge[1]) or G.has_edge(edge[1], edge[0]):
-            i += 1
+        columns = [
+            "string_id1",
+            "string_id2",
+        ]
+        # D: nx.DiGraph = import_graph_from_pickle("pathway.pickle")
+        D: nx.DiGraph = create_interactome(df_pathway, columns)
+        # export_graph_to_pickle(D, "pathway.pickle")
+        print("Pathway: ", path)
+        print("nodes:" + str(len(D.nodes())))
+        print("edges:" + str(len(D.edges())))
+        print()
 
-    print("edges from pathway found in interactome: ", i)
-    print("total edges in pathway: ", str(len(D.edges()) / 2))
-    missing = len(D.edges()) / 2 - i
-    print("missing pathway edges in interactome : ", missing)
+        print("Pathway and interactome compatibility")
+        i = 0
+        print(len(D.edges()))
+        for edge in D.edges():
+            if G.has_edge(edge[0], edge[1]) or G.has_edge(edge[1], edge[0]):
+                i += 1
 
+        print("edges from pathway found in interactome: ", i)
+        missing = len(D.edges()) - i
+        print("missing pathway edges in interactome : ", missing)
+        print()
 
 if __name__ == "__main__":
     main()
