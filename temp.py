@@ -1,3 +1,5 @@
+from pathlib import Path
+from matplotlib import pyplot as plt
 import pandas as pd
 import networkx as nx
 import pickle
@@ -112,6 +114,43 @@ def main():
         missing = len(D.edges()) - i
         print("missing pathway edges in interactome : ", missing)
         print()
+
+        weakly_connected_components = list(nx.weakly_connected_components(D))
+
+        num_weakly_connected_components = len(weakly_connected_components)
+
+        print("Number of weakly connected components:", num_weakly_connected_components)
+
+        strongly_connected_components = list(nx.strongly_connected_components(D))
+
+        num_strongly_connected_components = len(strongly_connected_components)
+
+        print(
+            "Number of strongly connected components:",
+            num_strongly_connected_components,
+        )
+        print()
+
+        plt.figure(figsize=(10, 8))
+        pos = nx.spring_layout(D)
+
+        nx.draw(
+            D,
+            pos,
+            with_labels=True,
+            node_color="lightblue",
+            node_size=700,
+            font_size=10,
+            font_color="black",
+            edge_color="gray",
+        )
+
+        plt.title(path)
+        output_dir = Path("./images/" + path + ".png")
+        plt.savefig(output_dir, format="png", dpi=300)
+        plt.show()
+        plt.close()
+
 
 if __name__ == "__main__":
     main()
