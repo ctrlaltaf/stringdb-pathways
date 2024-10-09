@@ -131,6 +131,20 @@ def main():
         )
         print()
 
+        # Check if we have disconnected components
+        if len(strongly_connected_components) != 1:
+            # Create a list of (component, number of edges) tuples
+            edge_counts = [
+                (component, len(D.subgraph(component).edges()))
+                for component in strongly_connected_components
+            ]
+
+            # Find the component with the maximum number of edges
+            largest_component, max_edges = max(edge_counts, key=lambda x: x[1])
+            D = D.subgraph(largest_component)
+
+            print(f"Selected component with {max_edges} edges.")
+
         plt.figure(figsize=(10, 8))
         pos = nx.spring_layout(D)
 
