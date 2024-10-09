@@ -1,3 +1,5 @@
+from pathlib import Path
+from matplotlib import pyplot as plt
 import pandas as pd
 import networkx as nx
 import pickle
@@ -29,7 +31,11 @@ def create_interactome(data, columns):
     for index, row in data.iterrows():
         node1 = row[columns[0]]
         node2 = row[columns[1]]
-        experiment = row[columns[2]]
+        experiment = None
+        if len(columns) == 3:
+            experiment = row[columns[2]]
+        else:
+            experiment = 1
         if experiment != 0:
             if not G.has_node(node1):
                 G.add_node(node1)
@@ -63,11 +69,13 @@ def bfs_k_hop(G: nx.DiGraph, node_set, k):
 
 
 def main():
-    pathway_path = "string_interactions_short.tsv"
+    print("temp.py")
+
+    pathway_dir = "./pathways"
     stringdb_path = "9606.protein.links.detailed.v12.0.txt"
+    pathways = ["apoptosis", "hedgehog", "jak", "notch", "wnt"]
 
     # read in files
-    df_pathway = read_file(pathway_path, "\t")
     df_stringdb = read_file(stringdb_path, " ")
 
     columns = ["protein1", "protein2", "experimental"]
@@ -76,62 +84,73 @@ def main():
     # export_graph_to_pickle(G, "interactome-experimental.pickle")
     print("Interactome")
     print("nodes:" + str(len(G.nodes())))
-    print("edges:" + str(len(G.edges()) / 2))
+    print("edges:" + str(len(G.edges())))
     print()
 
-    columns = [
-        "node1_string_id",
-        "node2_string_id",
-        "experimentally_determined_interaction",
-    ]
-    # D: nx.DiGraph = import_graph_from_pickle("pathway.pickle")
-    D: nx.DiGraph = create_interactome(df_pathway, columns)
-    # export_graph_to_pickle(D, "pathway.pickle")
-    print("Pathway")
-    print("nodes:" + str(len(D.nodes())))
-    print("edges:" + str(len(D.edges()) / 2))
-    print()
-    # check how many edges in pathway is missing in network
-    count = 0
-    remove_edges = []
-    for edge in D.edges():
-        if not G.has_edge(edge[0], edge[1]) or not G.has_edge(edge[1], edge[0]):
-            # remove the edge?
-            remove_edges.append([edge[0], edge[1]])
-            count += 1
-    print("edges in pathway missing in interactome: ", count)
+    for path in pathways:
+        file = pathway_dir + "/" + path + "/final.csv"
+        df_pathway = read_file(file, ",")
 
-    for edge in remove_edges:
-        if D.has_edge(edge[0], edge[1]):
-            D.remove_edge(edge[0], edge[1])
-        if D.has_edge(edge[1], edge[0]):
-            D.remove_edge(edge[1], edge[0])
+        columns = [
+            "string_id1",
+            "string_id2",
+        ]
+        # D: nx.DiGraph = import_graph_from_pickle("pathway.pickle")
+        D: nx.DiGraph = create_interactome(df_pathway, columns)
+        # export_graph_to_pickle(D, "pathway.pickle")
+        print("Pathway: ", path)
+        print("nodes:" + str(len(D.nodes())))
+        print("edges:" + str(len(D.edges())))
+        print()
 
-    # trying to subset the network
-    print()
-    print("Subnetwork generation")
-    print()
+        print("Pathway and interactome compatibility")
+        i = 0
+        print(len(D.edges()))
+        for edge in D.edges():
+            if G.has_edge(edge[0], edge[1]) or G.has_edge(edge[1], edge[0]):
+                i += 1
 
-    k = 2
+        print("edges from pathway found in interactome: ", i)
+        missing = len(D.edges()) - i
+        print("missing pathway edges in interactome : ", missing)
+        print()
 
-    # Get the k-hop neighbors from the small nodes
-    neighbors = bfs_k_hop(G, set(D.nodes()), k)
+        weakly_connected_components = list(nx.weakly_connected_components(D))
 
-    # Create a subgraph containing only the k-hop neighbors and their interactions
-    k_hop_subgraph = G.subgraph(neighbors)
+        num_weakly_connected_components = len(weakly_connected_components)
 
-    print("nodes:" + str(len(k_hop_subgraph.nodes())))
-    print("edges:" + str(len(k_hop_subgraph.edges())/2))
+        print("Number of weakly connected components:", num_weakly_connected_components)
 
+        strongly_connected_components = list(nx.strongly_connected_components(D))
 
+        num_strongly_connected_components = len(strongly_connected_components)
 
-    interaction = []
-    for index, row in df_stringdb.iterrows():
-        node1 = row["protein1"]
-        node2 = row["protein2"]
-        combined = '_'.join(sorted([node1, node2]))
-        interaction.append(combined)
-    df_stringdb["interaction"] = interaction
+        print(
+            "Number of strongly connected components:",
+            num_strongly_connected_components,
+        )
+        print()
+
+        plt.figure(figsize=(10, 8))
+        pos = nx.spring_layout(D)
+
+        nx.draw(
+            D,
+            pos,
+            with_labels=True,
+            node_color="lightblue",
+            node_size=700,
+            font_size=10,
+            font_color="black",
+            edge_color="gray",
+        )
+
+        plt.title(path)
+        output_dir = Path("./images/" + path + ".png")
+        plt.savefig(output_dir, format="png", dpi=300)
+        plt.show()
+        plt.close()
+
 
 if __name__ == "__main__":
     main()
