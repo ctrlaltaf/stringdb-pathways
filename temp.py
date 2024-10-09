@@ -97,6 +97,17 @@ def main():
     print("edges:" + str(len(D.edges()) / 2))
     print()
 
+    print("Pathway and interactome compatibility")
+    i = 0
+    for edge in D.edges():
+        if G.has_edge(edge[0], edge[1]) or G.has_edge(edge[1], edge[0]):
+            i += 1
+
+    print("edges from pathway found in interactome: ", i)
+    print("total edges in pathway: ", str(len(D.edges()) / 2))
+    missing = len(D.edges()) / 2 - i
+    print("missing pathway edges in interactome : ", missing)
+
 
 if __name__ == "__main__":
     main()
