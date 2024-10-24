@@ -69,7 +69,6 @@ def bfs_k_hop(G: nx.DiGraph, node_set, k):
 
 
 def main():
-    print("temp.py")
 
     pathway_dir = "./pathways"
     stringdb_path = "9606.protein.links.detailed.v12.0.txt"
@@ -143,7 +142,7 @@ def main():
             largest_component, max_edges = max(edge_counts, key=lambda x: x[1])
             D = D.subgraph(largest_component)
 
-            print(f"Selected component with {max_edges} edges.")
+            print(f"Selected component with {max_edges} edges and {len(D.nodes())} nodes.")
 
         plt.figure(figsize=(10, 8))
         pos = nx.spring_layout(D)
