@@ -26,7 +26,7 @@ def import_graph_from_pickle(filename):
         return pickle.load(f)
 
 
-def create_interactome(data, columns):
+def create_interactome(data, columns, threshold=1):
     G = nx.DiGraph()
     for index, row in data.iterrows():
         node1 = row[columns[0]]
@@ -36,7 +36,7 @@ def create_interactome(data, columns):
             experiment = row[columns[2]]
         else:
             experiment = 1
-        if experiment != 0:
+        if experiment >= threshold:
             if not G.has_node(node1):
                 G.add_node(node1)
             if not G.has_node(node2):
@@ -69,18 +69,21 @@ def bfs_k_hop(G: nx.DiGraph, node_set, k):
 
 
 def main():
-
     pathway_dir = "./pathways"
     stringdb_path = "9606.protein.links.detailed.v12.0.txt"
-    pathways = ["apoptosis", "hedgehog", "jak", "notch", "wnt"]
+    # pathways = ["apoptosis", "hedgehog", "jak", "notch", "wnt", "beta3"]
+    pathways = ["beta3"]
+
+    interactome_pickle_path = Path("interactome-experimental.pickle")
 
     # read in files
     df_stringdb = read_file(stringdb_path, " ")
 
     columns = ["protein1", "protein2", "experimental"]
-    G: nx.DiGraph = import_graph_from_pickle("interactome-experimental.pickle")
-    # G: nx.DiGraph = create_interactome(df_stringdb, columns)
-    # export_graph_to_pickle(G, "interactome-experimental.pickle")
+    threshold = 300
+    G: nx.DiGraph = import_graph_from_pickle(interactome_pickle_path)
+    # G: nx.DiGraph = create_interactome(df_stringdb, columns, threshold)
+    # export_graph_to_pickle(G, f"interactome-experimental-{threshold}.pickle")
     print("Interactome")
     print("nodes:" + str(len(G.nodes())))
     print("edges:" + str(len(G.edges())))
@@ -142,7 +145,9 @@ def main():
             largest_component, max_edges = max(edge_counts, key=lambda x: x[1])
             D = D.subgraph(largest_component)
 
-            print(f"Selected component with {max_edges} edges and {len(D.nodes())} nodes.")
+            print(
+                f"Selected component with {max_edges} edges and {len(D.nodes())} nodes."
+            )
 
         plt.figure(figsize=(10, 8))
         pos = nx.spring_layout(D)
